@@ -1,0 +1,10 @@
+# email settings
+sv_smtp: ""
+port_smtp:
+user: ""
+password: ""
+
+# logs settings
+log_level: INFO #DEBUG,INFO,WARNING,ERROR
+log_dir: "./logs/"
+log_days: 30 #numero de dias que se mantiene el log
