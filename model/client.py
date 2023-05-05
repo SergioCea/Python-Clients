@@ -1,12 +1,14 @@
+import sqlite3
+import re
 from model.conexion_db import ConexionDB
 from tkinter import messagebox
 from model.logger import Logger
 
 
 class Cliente:
-    def __init__(self, name, cif, tlf, tlf2, provincia, poblacion, direccion, cp, banco):
+    def __init__(self, nombre, cif, tlf, tlf2, provincia, poblacion, direccion, cp, banco):
         self.id_cliente = None
-        self.name = name
+        self.nombre = nombre
         self.cif = cif
         self.tlf = tlf
         self.tlf2 = tlf2
@@ -18,16 +20,26 @@ class Cliente:
         self.banco = banco
 
     def __str__(self):
-        return f'Cliente[{self.name}, {self.cif}, {self.tlf}, {self.tlf2}, {self.provincia}, {self.poblacion}, ' \
+        return f'Cliente[{self.nombre}, {self.cif}, {self.tlf}, {self.tlf2}, {self.provincia}, {self.poblacion}, ' \
                f'{self.direccion}, {self.cp}, {self.banco}]'
 
+
 logger = Logger("settings.yaml").logger
+
+
 def save_data_client(cliente, table):
     conexion = ConexionDB()
+    datos = list(filter(lambda x: not x.startswith("__") and not callable(getattr(cliente, x)), dir(cliente)))
+    vacios = [dato for dato in datos if cliente.__dict__[dato] == '' or cliente.__dict__[dato] is None]
 
-    sql = f"""INSERT INTO CLIENTE (NOMBRE, CIF, TLF, TLF2, PROVINCIA, POBLACION, DIRECCION, CP, BANCO) VALUES 
-    ('{cliente.name}', '{cliente.cif}', '{cliente.tlf}', '{cliente.tlf2}', '{cliente.provincia}', '{cliente.poblacion}',
-     '{cliente.direccion}', '{cliente.cp}', '{cliente.banco}')"""
+    valores = tuple(dato.upper() for dato in datos if dato not in vacios)
+    valores_datos = tuple(cliente.__dict__[dato] for dato in datos if dato not in vacios)
+
+    sql = f"""INSERT INTO CLIENTE {valores} VALUES {valores_datos}"""
+
+    # sql = f"""INSERT INTO CLIENTE (NOMBRE, CIF, TLF, TLF2, PROVINCIA, POBLACION, DIRECCION, CP, BANCO) VALUES
+    # ('{cliente.name}', '{cliente.cif}', '{cliente.tlf}', '{cliente.tlf2}', '{cliente.provincia}', '{cliente.poblacion}',
+    # '{cliente.direccion}', '{cliente.cp}', '{cliente.banco}')"""
 
     try:
         conexion.cursor.execute(sql)
@@ -47,16 +59,16 @@ def save_data_client(cliente, table):
             message = f'Cliente con CIF {cliente.cif} se ha creado correctamente'
             messagebox.showinfo(title, message)
             logger.info(f'Cliente con CIF {cliente.cif} se ha creado correctamente')
-
+            return True
         except Exception as e:
             print(e)
             title = 'Listar Cliente Nuevo'
             message = 'Error al listar el cliente'
             messagebox.showerror(title, message)
-    except Exception as e:
-        print(e)
+    except sqlite3.IntegrityError as e:
+        fail = re.search(r'length\(([^)]+)\)', str(e))
         title = 'Crear Cliente'
-        message = 'Error al crear el cliente'
+        message = f'Error al crear el cliente, revise el campo {fail.group(1)}'
         messagebox.showerror(title, message)
 
 
@@ -136,3 +148,4 @@ def load_bank():
     conexion.close_db()
 
     return options
+

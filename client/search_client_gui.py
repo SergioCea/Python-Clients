@@ -115,9 +115,9 @@ class Frame_Search(tk.Frame):
         self.boton_guardar_bus.config(width=10, cursor='hand2')
         self.boton_guardar_bus.grid(row=2, column=5, pady=10)
 
-        self.boton_cancel_bus = tk.Button(self.pes2, text='Cancelar', command=self.cancel)
-        self.boton_cancel_bus.config(width=10, cursor='hand2')
-        self.boton_cancel_bus.grid(row=2, column=6, pady=10)
+        self.boton_clean_bus = tk.Button(self.pes2, text='Limpiar', command=self.clean)
+        self.boton_clean_bus.config(width=10, cursor='hand2')
+        self.boton_clean_bus.grid(row=2, column=6, pady=10)
 
     def enable_fields_search(self):
         self.entry_nombre_bus.config(state='normal')
@@ -126,7 +126,7 @@ class Frame_Search(tk.Frame):
         self.entry_provincia_bus.config(state='normal')
         self.entry_poblacion_bus.config(state='normal')
 
-        self.boton_cancel_bus.config(state='normal')
+        self.boton_clean_bus.config(state='normal')
         self.boton_buscar_bus.config(state='normal')
 
         if self.id_cliente is not None:
@@ -165,7 +165,7 @@ class Frame_Search(tk.Frame):
         self.entry_banco_bus.config(state='disabled')
         self.entry_cp_bus.config(state='disabled')
 
-        self.boton_cancel_bus.config(state='disabled')
+        self.boton_clean_bus.config(state='disabled')
         self.boton_buscar_bus.config(state='disabled')
         self.boton_guardar_bus.config(state='disabled')
 
@@ -181,7 +181,7 @@ class Frame_Search(tk.Frame):
     def delete_table_bus(self):
         self.tabla_bus.delete(*self.tabla_bus.get_children())
 
-    def cancel(self):
+    def clean(self):
         self.clean_fields_search()
         self.disable_fields_search()
         self.tabla_bus.delete(*self.tabla_bus.get_children())

@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from model.client import Cliente, save_data_client, load_bank
-from model.conexion_db import ConexionDB
 
 
 class Frame_Client(tk.Frame):
@@ -11,7 +10,6 @@ class Frame_Client(tk.Frame):
         self.id_cliente = None
         self.pes1 = pes
         self.properties_client()
-
         self.disable_fields()
 
         self.table_client()
@@ -114,9 +112,9 @@ class Frame_Client(tk.Frame):
         self.boton_guardar.config(width=10, cursor='hand2')
         self.boton_guardar.grid(row=2, column=4, pady=10, columnspan=2)
 
-        self.boton_cancelar = tk.Button(self.pes1, text='Cancelar', command=self.clean_fields)
-        self.boton_cancelar.config(width=10, cursor='hand2')
-        self.boton_cancelar.grid(row=2, column=6, pady=10, columnspan=1)
+        self.boton_clean = tk.Button(self.pes1, text='Limpiar', command=self.clean_fields)
+        self.boton_clean.config(width=10, cursor='hand2')
+        self.boton_clean.grid(row=2, column=6, pady=10, columnspan=1)
 
     def enable_fields(self):
         self.entry_nombre.config(state='normal')
@@ -130,7 +128,7 @@ class Frame_Client(tk.Frame):
         self.entry_poblacion.config(state='normal')
         self.entry_cp.config(state='normal')
 
-        self.boton_cancelar.config(state='normal')
+        self.boton_clean.config(state='normal')
         self.boton_guardar.config(state='normal')
 
     def clean_fields(self):
@@ -161,7 +159,7 @@ class Frame_Client(tk.Frame):
         self.entry_poblacion.config(state='disabled')
         self.entry_cp.config(state='disabled')
 
-        self.boton_cancelar.config(state='disabled')
+        self.boton_clean.config(state='disabled')
         self.boton_guardar.config(state='disabled')
 
     def save_data(self):
@@ -177,11 +175,11 @@ class Frame_Client(tk.Frame):
             self.cp.get(),
             self.banco.get(),
         )
-
-        save_data_client(client, self.tabla)
-
-        # Limpiar campos
-        self.clean_fields()
+        if save_data_client(client, self.tabla):
+            # Limpiar campos
+            self.clean_fields()
+            # Reload Banks
+            self.actualizar_opciones()
 
     def table_client(self):
         self.tabla = ttk.Treeview(self.pes1, columns=('Nombre', 'CIF', 'Telefono', 'Otro telefono', 'Provincia',

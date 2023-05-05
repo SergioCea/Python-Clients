@@ -3,6 +3,7 @@ import os
 from logging.handlers import TimedRotatingFileHandler
 import yaml
 
+
 class Logger:
     def __init__(self, settings_file: str = ''):
         self.log_dir = None
@@ -32,7 +33,7 @@ class Logger:
         level = logging.getLevelName(self.log_level)
         logger.setLevel(level)
 
-        ## Here we define our formatter
+        # Here we define our formatter
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         log_file = self.log_dir+"facturacion.log"
 
