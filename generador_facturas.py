@@ -38,14 +38,13 @@ class App(tk.Tk):
 
     def show_frame(self, frame_name):
         if frame_name == "Frame_Client":
-            self.geometry("1120x420")
-            self.app_client.actualizar_opciones()
+            self.geometry("1250x420")
             frame = self.nuevo_cliente
         elif frame_name == "Frame_Search":
-            self.geometry("1120x400")
+            self.geometry("1250x400")
             frame = self.buscar_cliente
         elif frame_name == "Frame_Banco":
-            self.geometry("770x420")
+            self.geometry("830x420")
             frame = self.crear_banco
         else:
             return

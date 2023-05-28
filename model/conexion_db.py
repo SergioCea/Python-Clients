@@ -32,6 +32,7 @@ class ConexionDB:
             ID_BANCO INTEGER PRIMARY KEY AUTOINCREMENT,
             NOMBRE VARCHAR(50)CHECK(length(NOMBRE) <= 50),
             CIF VARCHAR(9) UNIQUE CHECK(length(CIF) == 9)  NOT NULL,
+            CIF_CLIENTE VARCHAR(9) UNIQUE CHECK(length(CIF) == 9) NOT NULL,
             TLF VARCHAR(10) CHECK(length(TLF) <= 10),
             DIRECCION VARCHAR(50) CHECK(length(DIRECCION) <= 50),
             IBAN VARCHAR(25) UNIQUE CHECK(length(IBAN) <= 25) NOT NULL)"""
@@ -40,10 +41,16 @@ class ConexionDB:
         self.close_db()
 
     def close_db(self):
+        """
+        Función para cerrar la conexión y confirmar los cambios
+        """
         self.connection.commit()
         self.connection.close()
 
     def table_exists(self, table):
+        """
+        Función para comprobar si una tabla existe
+        """
         sql = f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'"
         self.cursor.execute(sql)
         if len(self.cursor.fetchall()) > 0:

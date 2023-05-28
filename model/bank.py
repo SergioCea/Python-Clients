@@ -6,34 +6,37 @@ from model.logger import Logger
 
 
 class Banco:
-    def __init__(self, name, cif, tlf, direccion, iban):
+    def __init__(self, name, cif, cif_client, tlf, direccion, iban):
         self.id_banco = None
         self.name = name
         self.cif = cif
+        self.cif_client = cif_client
         self.tlf = tlf
         self.direccion = direccion
         self.iban = iban
 
     def __str__(self):
-        return f'Banco[{self.name}, {self.cif}, {self.tlf}, {self.direccion}, {self.iban}]'
+        return f'Banco[{self.name}, {self.cif}, {self.cif_client}, {self.tlf}, {self.direccion}, {self.iban}]'
 
 
 logger = Logger("settings.yaml").logger
 
 
 def save_data_bank(banco, table):
-    conexion = ConexionDB()
-    datos = list(filter(lambda x: not x.startswith("__") and not callable(getattr(banco, x)), dir(banco)))
-    for dato in datos:
-        if banco.__dict__[dato] == '':
-            banco.__dict__[dato] = None
+    """
+    Guarda los datos del banco en la base de datos
 
-    sql = f"""INSERT INTO BANCO (NOMBRE, CIF, TLF, DIRECCION, IBAN) VALUES 
-    ('{banco.name}', '{banco.cif}', '{banco.tlf}', '{banco.direccion}', '{banco.iban}')"""
+    :param banco: Banco a guardar
+    :param table: Tabla donde se mostraran los datos
+    """
+    conexion = ConexionDB()
+
+    sql = f"""INSERT INTO BANCO (NOMBRE, CIF, CIF_CLIENTE, TLF, DIRECCION, IBAN) VALUES 
+    ('{banco.name}', '{banco.cif}', '{banco.cif_client}', '{banco.tlf}', '{banco.direccion}', '{banco.iban}')"""
 
     try:
         conexion.cursor.execute(sql)
-        sql = f"SELECT NOMBRE, CIF, TLF, DIRECCION " \
+        sql = f"SELECT NOMBRE, CIF, CIF_CLIENTE, TLF, DIRECCION, IBAN " \
               f"FROM banco WHERE cif = '{banco.cif}'"
 
         try:
@@ -49,7 +52,7 @@ def save_data_bank(banco, table):
             message = f'Banco con CIF {banco.cif} se ha creado correctamente'
             messagebox.showinfo(title, message)
             logger.info(f'Banco con CIF {banco.cif} se ha creado correctamente')
-
+            return True
         except Exception as e:
             print(e)
             title = 'Listar Banco Nuevo'

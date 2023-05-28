@@ -15,6 +15,9 @@ class Frame_Client(tk.Frame):
         self.table_client()
 
     def properties_client(self):
+        """
+        Labels datos del cliente
+        """
         # Labels datos del cliente
         self.label_nombre = tk.Label(self.pes1, text='Nombre:')
         self.label_nombre.grid(row=0, column=0, padx=10, pady=10)
@@ -45,8 +48,8 @@ class Frame_Client(tk.Frame):
         self.label_fax.grid(row=0, column=8, pady=10)
         """
 
-        self.label_banco = tk.Label(self.pes1, text='Banco:')
-        self.label_banco.grid(row=1, column=8, pady=10)
+        """self.label_banco = tk.Label(self.pes1, text='Banco:')
+        self.label_banco.grid(row=1, column=8, pady=10)"""
 
         # Entrys de los datos
         self.nombre = tk.StringVar()
@@ -76,12 +79,12 @@ class Frame_Client(tk.Frame):
         self.entry_fax.grid(row=0, column=9)
         """
 
-        self.banco = tk.StringVar()
-        self.options = load_bank()
+        """self.banco = tk.StringVar()
+        self.options = load_bank(client=self.nombre.get())
         self.entry_banco = tk.OptionMenu(self.pes1, self.banco, '', *self.options)
         self.entry_banco.grid(row=1, column=9, pady=10, padx=10)
         # Agregar un rastreador de cambios en la variable del campo select
-        self.banco.trace('w', self.actualizar_opciones)
+        self.banco.trace('w', self.actualizar_opciones)"""
 
         self.direcion = tk.StringVar()
         self.entry_direccion = tk.Entry(self.pes1, textvariable=self.direcion)
@@ -117,12 +120,15 @@ class Frame_Client(tk.Frame):
         self.boton_clean.grid(row=2, column=6, pady=10, columnspan=1)
 
     def enable_fields(self):
+        """
+        Habilita los campos
+        """
         self.entry_nombre.config(state='normal')
         self.entry_cif.config(state='normal')
         self.entry_tlf.config(state='normal')
         self.entry_tlf2.config(state='normal')
         self.entry_provincia.config(state='normal')
-        self.entry_banco.config(state='normal')
+        # self.entry_banco.config(state='normal')
         # self.entry_fax.config(state='normal')
         self.entry_direccion.config(state='normal')
         self.entry_poblacion.config(state='normal')
@@ -132,6 +138,9 @@ class Frame_Client(tk.Frame):
         self.boton_guardar.config(state='normal')
 
     def clean_fields(self):
+        """
+        Limpia los campos
+        """
         # Cliente nuevo
         self.nombre.set('')
         self.cif.set('')
@@ -139,12 +148,15 @@ class Frame_Client(tk.Frame):
         self.tlf2.set('')
         self.direcion.set('')
         # self.fax.set('')
-        self.banco.set('')
+        # self.banco.set('')
         self.provincia.set('')
         self.cp.set('')
         self.poblacion.set('')
 
     def disable_fields(self):
+        """
+        Desabilita los campos
+        """
         self.clean_fields()
 
         # Nuevo cliente
@@ -153,7 +165,7 @@ class Frame_Client(tk.Frame):
         self.entry_tlf.config(state='disabled')
         self.entry_tlf2.config(state='disabled')
         self.entry_provincia.config(state='disabled')
-        self.entry_banco.config(state='disabled')
+        # self.entry_banco.config(state='disabled')
         # self.entry_fax.config(state='disabled')
         self.entry_direccion.config(state='disabled')
         self.entry_poblacion.config(state='disabled')
@@ -163,6 +175,9 @@ class Frame_Client(tk.Frame):
         self.boton_guardar.config(state='disabled')
 
     def save_data(self):
+        """
+        Guarda los datos y limpia los campos tras confirmar que se han guardado correctamente
+        """
         client = Cliente(
             self.nombre.get(),
             self.cif.get(),
@@ -173,18 +188,20 @@ class Frame_Client(tk.Frame):
             self.poblacion.get(),
             self.direcion.get(),
             self.cp.get(),
-            self.banco.get(),
+            load_bank(client=self.cif.get())[0],
+            # self.banco.get(),
         )
         if save_data_client(client, self.tabla):
             # Limpiar campos
             self.clean_fields()
-            # Reload Banks
-            self.actualizar_opciones()
 
     def table_client(self):
+        """
+        Crea la tabla de clientes
+        """
         self.tabla = ttk.Treeview(self.pes1, columns=('Nombre', 'CIF', 'Telefono', 'Otro telefono', 'Provincia',
                                                       'Población', 'Dirección', 'CP', 'Banco'), show='headings')
-        self.tabla.grid(row=4, column=0, columnspan=10, padx=(10, 0), sticky='nse')
+        self.tabla.grid(row=4, column=0, columnspan=10, padx=(10, 0), sticky='nsew')
         self.scroll = ttk.Scrollbar(self.pes1,
                                     orient='vertical', command=self.tabla.yview)
         self.scroll.grid(row=4, column=10, sticky='nse')
@@ -210,15 +227,3 @@ class Frame_Client(tk.Frame):
         self.tabla.heading('#9', text='Banco')
         self.tabla.column('Banco', width=100, anchor='center')
 
-    def actualizar_opciones(self, *args):
-        options = load_bank()
-        # Obtener el valor actual del campo de entrada
-        valor = self.banco.get().lower()
-
-        # Obtener todas las opciones que contienen el valor actual
-        opciones_filtradas = [opcion for opcion in options if valor in opcion.lower()]
-
-        # Actualizar las opciones del campo select
-        self.entry_banco['menu'].delete(0, 'end')
-        for opcion in opciones_filtradas:
-            self.entry_banco['menu'].add_command(label=opcion, command=tk._setit(self.banco, opcion))

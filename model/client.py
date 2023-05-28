@@ -28,9 +28,16 @@ logger = Logger("settings.yaml").logger
 
 
 def save_data_client(cliente, table):
+    """
+    Guarda los datos del cliente en la base de datos
+
+    :param cliente: Cliente a guardar
+    :param table: Tabla donde se guardarán los datos
+    :return: True si se guardó correctamente
+    """
     conexion = ConexionDB()
     datos = list(filter(lambda x: not x.startswith("__") and not callable(getattr(cliente, x)), dir(cliente)))
-    vacios = [dato for dato in datos if cliente.__dict__[dato] == '' or cliente.__dict__[dato] is None]
+    vacios = [dato for dato in datos if cliente.__dict__[dato] == '' or cliente.__dict__[dato] is None or cliente.__dict__[dato] == 'None']
 
     valores = tuple(dato.upper() for dato in datos if dato not in vacios)
     valores_datos = tuple(cliente.__dict__[dato] for dato in datos if dato not in vacios)
@@ -72,20 +79,33 @@ def save_data_client(cliente, table):
         messagebox.showerror(title, message)
 
 
-def edit_client(client, id_client):
-    conexion = ConexionDB()
+def edit_client(cliente, id_client, table):
+    """
+    Actualiza los datos del cliente en la base de datos y los muestra en la tabla
 
-    sql = f"""UPDATE CLIENTE 
-                SET NOMBRE = '{client.name}', CIF= '{client.cif}', TLF= '{client.tlf}', TLF2= '{client.tlf2}', 
-                PROVINCIA= '{client.provincia}', POBLACION= '{client.poblacion}',DIRECCION= '{client.direccion}', 
-                CP= '{client.cp}', BANCO= '{client.banco}' WHERE ID_CLIENTE = '{id_client}'"""
+    :param cliente: Cliente a actualizar
+    :param id_client: ID del cliente
+    :param table: Tabla donde se mostrarán los datos
+    :return: True si se actualizó correctamente
+
+    """
+    conexion = ConexionDB()
+    datos = list(filter(lambda x: not x.startswith("__") and not callable(getattr(cliente, x)), dir(cliente)))
+    vacios = [dato for dato in datos if cliente.__dict__[dato] == '' or cliente.__dict__[dato] is None or cliente.__dict__[dato] == 'None']
+
+    valores = tuple(dato.upper() for dato in datos if dato not in vacios)
+    valores_datos = tuple(cliente.__dict__[dato] for dato in datos if dato not in vacios)
 
     try:
-        conexion.cursor.execute(sql)
+        for nombre, valor in zip(valores, valores_datos):
+            sql = f"""UPDATE CLIENTE SET {nombre} = '{valor}' WHERE ID_CLIENTE = '{id_client}'"""
+            conexion.cursor.execute(sql)
         title = 'Actualizar Cliente'
         message = 'El cliente se actualizo correctamente'
         messagebox.showinfo(title, message)
         conexion.close_db()
+        list_edit(table, id_client)
+        return True
     except Exception as e:
         print(e)
         title = 'Actualizar Cliente'
@@ -94,9 +114,14 @@ def edit_client(client, id_client):
 
 
 def list_edit(table, id_cliente):
+    """
+    Muestra los datos del cliente en la tabla
+
+    :param table: Tabla donde se mostrarán los datos
+    :param id_cliente: ID del cliente
+    """
     conexion = ConexionDB()
-    sql = f"SELECT NOMBRE, CIF, TLF, TLF2, PROVINCIA, POBLACION, DIRECCION, CP, BANCO " \
-          f"FROM cliente WHERE id_cliente = '{id_cliente}'"
+    sql = f"SELECT NOMBRE, CIF, TLF, TLF2, PROVINCIA, POBLACION, DIRECCION, CP, BANCO FROM cliente WHERE id_cliente = '{id_cliente}'"
 
     try:
         conexion.cursor.execute(sql)
@@ -105,7 +130,11 @@ def list_edit(table, id_cliente):
         i = 0
         for row in rows:
             table.delete(*table.get_children())
-            table.insert('', i, text='1', values=row)
+            dato = list(row)
+            for r in dato:
+                if r is None:
+                    dato[dato.index(r)] = ''
+            table.insert('', i, text='1', values=dato)
             int(i) + 1
         conexion.close_db()
     except Exception as e:
@@ -116,17 +145,28 @@ def list_edit(table, id_cliente):
 
 
 def search_client(client, table):
+    """
+    Busca el cliente en la base de datos
+
+    :param client: Cliente a buscar
+    :param table: Tabla donde se mostrarán los datos
+
+    """
     conexion = ConexionDB()
 
-    sql = f"""SELECT NOMBRE, CIF, TLF, TLF2, PROVINCIA, POBLACION, DIRECCION, CP, BANCO FROM cliente WHERE NOMBRE LIKE '{client.name}%'"""
+    sql = f"""SELECT NOMBRE, CIF, TLF, TLF2, PROVINCIA, POBLACION, DIRECCION, CP, BANCO 
+    FROM cliente WHERE NOMBRE LIKE '{client.nombre}%'"""
 
     try:
         conexion.cursor.execute(sql)
         rows = conexion.cursor.fetchall()
-
         i = 0
         for row in rows:
-            table.insert('', i, text='1', values=row)
+            dato = list(row)
+            for r in dato:
+                if r is None:
+                    dato[dato.index(r)] = ''
+            table.insert('', i, text='1', values=dato)
             int(i) + 1
         conexion.close_db()
     except Exception as e:
@@ -137,15 +177,46 @@ def search_client(client, table):
         logger.error(e)
 
 
-def load_bank():
+def delete_client(cif):
+    """
+    Elimina el cliente de la base de datos
+
+    :param cif: CIF del cliente a eliminar
+    """
     conexion = ConexionDB()
-    sql = f"SELECT nombre FROM banco"
-    conexion.cursor.execute(sql)
+    sql = f"DELETE FROM cliente WHERE CIF = '{cif}'"
+    try:
+        conexion.cursor.execute(sql)
+        title = 'Eliminar Cliente'
+        message = 'El cliente se elimino correctamente'
+        messagebox.showinfo(title, message)
+        conexion.close_db()
+    except Exception as e:
+        print(e)
+        title = 'Eliminar Cliente'
+        message = 'Error al eliminar el cliente'
+        messagebox.showerror(title, message)
+        logger.error(e)
 
-    rows = conexion.cursor.fetchall()
-    options = [f"{row[0]}" for row in rows]
 
-    conexion.close_db()
+def load_bank(client=None):
+    """
+    Función para cargar los bancos segun el cliente
 
-    return options
+    :param client: Cliente a buscar
+    :return: lista de bancos
+    """
+    conexion = ConexionDB()
 
+    if client is not None and client != '':
+        sql = f"SELECT IBAN FROM banco WHERE CIF_CLIENTE = '{client}'"
+        conexion.cursor.execute(sql)
+
+        rows = conexion.cursor.fetchall()
+        options = [f"{row[0]}" for row in rows]
+
+        conexion.close_db()
+
+        return options
+    elif client == '':
+        return "None"

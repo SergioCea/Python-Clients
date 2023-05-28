@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from model.conexion_db import ConexionDB
-from model.client import Cliente, edit_client, list_edit, search_client
+from model.client import Cliente, edit_client, search_client, load_bank, delete_client
 
 
 class Frame_Search(tk.Frame):
@@ -16,6 +16,9 @@ class Frame_Search(tk.Frame):
         self.table_client_search()
 
     def search_client(self):
+        """
+        Interfaz de busqueda de cliente
+        """
         # Labels datos del cliente
         self.label_nombre_bus = tk.Label(self.pes2, text='Nombre:')
         self.label_nombre_bus.grid(row=0, column=0, padx=10, pady=10)
@@ -46,9 +49,6 @@ class Frame_Search(tk.Frame):
         self.label_fax.grid(row=0, column=8, pady=10)
         """
 
-        self.label_banco_bus = tk.Label(self.pes2, text='Banco:')
-        self.label_banco_bus.grid(row=1, column=8, pady=10)
-
         # Entrys de los datos
         self.nombre_bus = tk.StringVar()
         self.entry_nombre_bus = tk.Entry(self.pes2, textvariable=self.nombre_bus)
@@ -76,11 +76,6 @@ class Frame_Search(tk.Frame):
         self.entry_fax.config()
         self.entry_fax.grid(row=0, column=9)
         """
-
-        self.banco_bus = tk.StringVar()
-        self.entry_banco_bus = tk.Entry(self.pes2, textvariable=self.banco_bus)
-        self.entry_banco_bus.config()
-        self.entry_banco_bus.grid(row=1, column=9, pady=10, padx=10)
 
         self.direcion_bus = tk.StringVar()
         self.entry_direccion_bus = tk.Entry(self.pes2, textvariable=self.direcion_bus)
@@ -120,8 +115,10 @@ class Frame_Search(tk.Frame):
         self.boton_clean_bus.grid(row=2, column=6, pady=10)
 
     def enable_fields_search(self):
+        """
+        Habilita los campos de busqueda
+        """
         self.entry_nombre_bus.config(state='normal')
-        self.entry_cif_bus.config(state='normal')
         self.entry_tlf_bus.config(state='normal')
         self.entry_provincia_bus.config(state='normal')
         self.entry_poblacion_bus.config(state='normal')
@@ -132,11 +129,13 @@ class Frame_Search(tk.Frame):
         if self.id_cliente is not None:
             self.entry_tlf2_bus.config(state='normal')
             self.entry_direccion_bus.config(state='normal')
-            self.entry_banco_bus.config(state='normal')
             self.entry_cp_bus.config(state='normal')
             self.boton_guardar_bus.config(state='normal')
 
     def clean_fields_search(self):
+        """
+        Limpia los campos de busqueda
+        """
         # Busqueda cliente
         self.nombre_bus.set('')
         self.cif_bus.set('')
@@ -148,9 +147,11 @@ class Frame_Search(tk.Frame):
             self.tlf2_bus.set('')
             self.cp_bus.set('')
             self.direcion_bus.set('')
-            self.banco_bus.set('')
 
     def disable_fields(self):
+        """
+        Desabilita los campos
+        """
         self.clean_fields_search()
 
         # Busqueda cliente
@@ -162,7 +163,6 @@ class Frame_Search(tk.Frame):
 
         self.entry_tlf2_bus.config(state='disabled')
         self.entry_direccion_bus.config(state='disabled')
-        self.entry_banco_bus.config(state='disabled')
         self.entry_cp_bus.config(state='disabled')
 
         self.boton_clean_bus.config(state='disabled')
@@ -170,24 +170,35 @@ class Frame_Search(tk.Frame):
         self.boton_guardar_bus.config(state='disabled')
 
     def disable_fields_search(self):
+        """
+        Desabilita los campos
+        """
         # Busqueda cliente
         self.entry_tlf2_bus.config(state='disabled')
         self.entry_direccion_bus.config(state='disabled')
-        self.entry_banco_bus.config(state='disabled')
         self.entry_cp_bus.config(state='disabled')
 
         self.boton_guardar_bus.config(state='disabled')
 
     def delete_table_bus(self):
+        """
+        Elimina la tabla
+        """
         self.tabla_bus.delete(*self.tabla_bus.get_children())
 
     def clean(self):
+        """
+        Limpia los campos
+        """
         self.clean_fields_search()
         self.disable_fields_search()
         self.tabla_bus.delete(*self.tabla_bus.get_children())
         self.id_cliente = None
 
     def save_data_search(self):
+        """
+        Edita los datos del cliente y lista el cliente
+        """
         client = Cliente(
             self.nombre_bus.get(),
             self.cif_bus.get(),
@@ -198,17 +209,18 @@ class Frame_Search(tk.Frame):
             self.poblacion_bus.get(),
             self.direcion_bus.get(),
             self.cp_bus.get(),
-            self.banco_bus.get(),
+            load_bank(client=self.cif_bus.get())[0],
         )
 
-        edit_client(client, self.id_cliente)
-        list_edit(self.tabla_bus, self.id_cliente)
-
-        # Limpiar campos
-        self.clean_fields_search()
-        self.disable_fields_search()
+        if edit_client(client, self.id_cliente, self.tabla_bus):
+            # Limpiar campos
+            self.clean_fields_search()
+            self.disable_fields_search()
 
     def search_data(self):
+        """
+        Realiza la busqueda
+        """
         self.delete_table_bus()
         client = Cliente(
             self.nombre_bus.get(),
@@ -219,15 +231,18 @@ class Frame_Search(tk.Frame):
             self.poblacion_bus.get(),
             self.direcion_bus.get(),
             self.cp_bus.get(),
-            self.banco_bus.get(),
+            load_bank(client=self.cif_bus.get())[0],
         )
 
         search_client(client, self.tabla_bus)
 
     def table_client_search(self):
+        """
+        Crea la tabla
+        """
         self.tabla_bus = ttk.Treeview(self.pes2, columns=('Nombre', 'CIF', 'Telefono', 'Otro telefono', 'Provincia',
-                                                 'Población', 'Dirección', 'CP', 'Banco'), show='headings')
-        self.tabla_bus.grid(row=4, column=0, columnspan=10, padx=(10, 0), sticky='nse')
+                                                          'Población', 'Dirección', 'CP', 'Banco'), show='headings')
+        self.tabla_bus.grid(row=4, column=0, columnspan=10, padx=(10, 0), sticky='nsew')
         self.scroll_bus = ttk.Scrollbar(self.pes2,
                                     orient='vertical', command=self.tabla_bus.yview)
         self.scroll_bus.grid(row=4, column=10, sticky='nse')
@@ -257,11 +272,14 @@ class Frame_Search(tk.Frame):
         self.boton_editar_bus.config(width=15, cursor='hand2')
         self.boton_editar_bus.grid(row=5, column=0, pady=10, padx=10, columnspan=2)
 
-        self.boton_borrar_bus = tk.Button(self.pes2, text='Eliminar Cliente')
+        self.boton_borrar_bus = tk.Button(self.pes2, text='Eliminar Cliente', command=self.delete_table_search)
         self.boton_borrar_bus.config(width=15, cursor='hand2')
         self.boton_borrar_bus.grid(row=5, column=1, pady=10, padx=10, columnspan=3)
 
     def edit_table_search(self):
+        """
+        Seleeciona el cliente para editar y muestras sus datos en los campos
+        """
         conexion = ConexionDB()
         try:
             self.bus_nombre = self.tabla_bus.item(self.tabla_bus.selection())['values'][0]
@@ -272,7 +290,6 @@ class Frame_Search(tk.Frame):
             self.bus_poblacion = self.tabla_bus.item(self.tabla_bus.selection())['values'][5]
             self.bus_direcion = self.tabla_bus.item(self.tabla_bus.selection())['values'][6]
             self.bus_cp = self.tabla_bus.item(self.tabla_bus.selection())['values'][7]
-            self.bus_banco = self.tabla_bus.item(self.tabla_bus.selection())['values'][8]
             sql = f"""SELECT ID_CLIENTE FROM CLIENTE WHERE CIF = '{self.bus_cif}'"""
             conexion.cursor.execute(sql)
             id = conexion.cursor.fetchone()
@@ -281,16 +298,22 @@ class Frame_Search(tk.Frame):
             self.enable_fields_search()
             self.clean_fields_search()
 
-            self.entry_nombre_bus.insert(0, self.bus_nombre)
-            self.entry_cif_bus.insert(0, self.bus_cif)
-            self.entry_tlf_bus.insert(0, self.bus_tlf)
-            self.entry_provincia_bus.insert(0, self.bus_provincia)
-            self.entry_poblacion_bus.insert(0, self.bus_poblacion)
-
-            self.entry_tlf2_bus.insert(0, self.bus_tlf2)
-            self.entry_direccion_bus.insert(0, self.bus_direcion)
-            self.entry_banco_bus.insert(0, self.bus_banco)
-            self.entry_cp_bus.insert(0, self.bus_cp)
+            self.entry_nombre_bus.insert(0, self.bus_nombre if self.bus_nombre != "None" else '')
+            self.cif_bus.set(self.bus_cif if self.bus_cif != "None" else '')
+            self.entry_tlf_bus.insert(0, self.bus_tlf if self.bus_tlf != "None" else '')
+            self.entry_tlf2_bus.insert(0, self.bus_tlf2 if self.bus_tlf2 != "None" else '')
+            self.entry_provincia_bus.insert(0, self.bus_provincia if self.bus_provincia != "None" else '')
+            self.entry_poblacion_bus.insert(0, self.bus_poblacion if self.bus_poblacion != "None" else '')
+            self.entry_direccion_bus.insert(0, self.bus_direcion if self.bus_direcion != "None" else '')
+            self.entry_cp_bus.insert(0, self.bus_cp if self.bus_cp != "None" else '')
 
         except Exception as e:
             print(e)
+
+    def delete_table_search (self):
+        """
+        Elimina el cliente
+        """
+        self.bus_cif = self.tabla_bus.item(self.tabla_bus.selection())['values'][1]
+        delete_client(self.bus_cif)
+        self.clean()
